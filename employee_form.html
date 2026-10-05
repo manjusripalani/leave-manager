@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if emp else 'Add' }} employee · Leave Manager{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ 'Edit employee' if emp else 'Add employee' }}</h1></div></div>
+<form class="panel" method="post" style="max-width: 720px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-3 mb-3">
+    <div class="col-sm-6"><label class="form-label" for="name">Name</label>
+      <input class="form-control" id="name" name="name" value="{{ form.get('name', '') }}" required></div>
+    <div class="col-sm-6"><label class="form-label" for="email">Email</label>
+      <input class="form-control" type="email" id="email" name="email" value="{{ form.get('email', '') }}" required></div>
+  </div>
+  <div class="row g-3 mb-3">
+    <div class="col-sm-4"><label class="form-label" for="role">Role</label>
+      <select class="form-select" id="role" name="role">
+        {% for r in ['employee', 'manager', 'admin'] %}<option value="{{ r }}" {{ 'selected' if form.get('role') == r }}>{{ r|capitalize }}</option>{% endfor %}
+      </select></div>
+    <div class="col-sm-4"><label class="form-label" for="department_id">Department</label>
+      <select class="form-select" id="department_id" name="department_id">
+        <option value="">None</option>
+        {% for d in depts %}<option value="{{ d.id }}" {{ 'selected' if form.get('department_id')|string == d.id|string }}>{{ d.name }}</option>{% endfor %}
+      </select></div>
+    <div class="col-sm-4"><label class="form-label" for="manager_id">Manager</label>
+      <select class="form-select" id="manager_id" name="manager_id">
+        <option value="">None</option>
+        {% for m in managers %}{% if not emp or m.id != emp.id %}<option value="{{ m.id }}" {{ 'selected' if form.get('manager_id')|string == m.id|string }}>{{ m.name }}</option>{% endif %}{% endfor %}
+      </select></div>
+  </div>
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6"><label class="form-label" for="join_date">Join date</label>
+      <input class="form-control" type="date" id="join_date" name="join_date" value="{{ form.get('join_date', '') }}" required></div>
+    <div class="col-sm-6"><label class="form-label" for="password">{{ 'New password' if emp else 'Password' }}</label>
+      <input class="form-control" type="password" id="password" name="password" minlength="6" {{ '' if emp else 'required' }}>
+      {% if emp %}<div class="hint mt-1">Leave blank to keep the current password.</div>{% endif %}</div>
+  </div>
+  <button class="btn btn-primary" type="submit">{{ 'Save changes' if emp else 'Add employee' }}</button>
+  <a class="btn btn-link" href="{{ url_for('admin_employees') }}">Cancel</a>
+</form>
+{% endblock %}
