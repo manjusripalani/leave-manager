@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Departments · Leave Manager{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Departments</h1></div></div>
+<div class="row g-3">
+  <div class="col-lg-7"><div class="panel">
+    <table class="table">
+      <thead><tr><th>Name</th><th class="num">Members</th><th></th></tr></thead>
+      <tbody>{% for d in rows %}
+        <tr><td>{{ d.name }}</td><td class="num">{{ d.members }}</td>
+          <td class="text-end"><form method="post" action="{{ url_for('department_delete', did=d.id) }}" onsubmit="return confirm('Delete {{ d.name }}?')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+      {% endfor %}</tbody>
+    </table>
+  </div></div>
+  <div class="col-lg-5"><form class="panel" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>Add a department</h2>
+    <div class="mb-3"><label class="form-label" for="name">Name</label><input class="form-control" id="name" name="name" required></div>
+    <button class="btn btn-primary">Add department</button>
+  </form></div>
+</div>
+{% endblock %}

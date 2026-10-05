@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Apply for leave · Leave Manager{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Apply for leave</h1><p>Weekends and company holidays aren't counted.</p></div></div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form class="panel" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3">
+        <label class="form-label" for="leave_type_id">Leave type</label>
+        <select class="form-select" id="leave_type_id" name="leave_type_id" required>
+          <option value="">Choose a type</option>
+          {% for t in types %}
+          <option value="{{ t.id }}" {{ 'selected' if form.get('leave_type_id')|string == t.id|string }}>{{ t.name }} ({{ [balances[t.id], 0]|max }} available)</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6"><label class="form-label" for="from_date">From</label>
+          <input class="form-control" type="date" id="from_date" name="from_date" min="{{ today.isoformat() }}" value="{{ form.get('from_date', '') }}" required></div>
+        <div class="col-sm-6"><label class="form-label" for="to_date">To</label>
+          <input class="form-control" type="date" id="to_date" name="to_date" min="{{ today.isoformat() }}" value="{{ form.get('to_date', '') }}" required></div>
+      </div>
+      <div class="form-check mb-3" id="halfDayWrap" style="display:none">
+        <input class="form-check-input" type="checkbox" id="half_day" name="half_day" {{ 'checked' if form.get('half_day') }}>
+        <label class="form-check-label" for="half_day">Half day (0.5 day)</label>
+      </div>
+      <p class="hint" id="dayCount" aria-live="polite">Pick both dates to see how many working days this uses.</p>
+      <div class="mb-4">
+        <label class="form-label" for="reason">Reason</label>
+        <textarea class="form-control" id="reason" name="reason" rows="3" required>{{ form.get('reason', '') }}</textarea>
+      </div>
+      <button class="btn btn-primary" type="submit">Send request</button>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="panel">
+      <h2>Available balance</h2>
+      <p class="hint">Days already held by pending requests are already subtracted.</p>
+      {% for t in types %}
+      <div class="d-flex justify-content-between py-2 border-top"><span>{{ t.name }}</span><strong>{{ [balances[t.id], 0]|max }} of {{ t.yearly_quota }}</strong></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const from = document.getElementById('from_date'), to = document.getElementById('to_date'), out = document.getElementById('dayCount');
+  const halfWrap = document.getElementById('halfDayWrap'), half = document.getElementById('half_day');
+  async function update() {
+    halfWrap.style.display = (from.value && to.value && from.value === to.value) ? 'block' : 'none';
+    if (halfWrap.style.display === 'none') half.checked = false;
+    if (!from.value || !to.value) return;
+    const params = new URLSearchParams({ from: from.value, to: to.value, half_day: half.checked ? '1' : '0' });
+    const res = await fetch(`{{ url_for('api_leave_days') }}?${params}`);
+    const { days } = await res.json();
+    out.textContent = days ? `This request uses ${days} working day${days === 1 ? '' : 's'}.` : 'That range has no working days.';
+  }
+  from.addEventListener('change', () => { if (!to.value || to.value < from.value) to.value = from.value; update(); });
+  to.addEventListener('change', update);
+  half.addEventListener('change', update);
+  update();
+</script>
+{% endblock %}
